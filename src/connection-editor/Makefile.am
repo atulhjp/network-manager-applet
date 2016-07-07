@@ -38,6 +38,8 @@ nm_connection_editor_SOURCES = \
 	page-wifi-security.c \
 	page-infiniband.h \
 	page-infiniband.c \
+	page-proxy.h \
+	page-proxy.c \
 	page-ip4.h \
 	page-ip4.c \
 	page-ip6.h \
@@ -103,6 +105,7 @@ ui_DATA = \
 	ce-page-team-port.ui \
 	ce-page-bridge.ui \
 	ce-page-bridge-port.ui \
+	ce-page-proxy.ui \
 	ce-page-ip4.ui \
 	ce-ip4-routes.ui \
 	ce-page-ip6.ui \
