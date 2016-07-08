@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.19.0 -->
 <interface>
-  <!-- interface-requires gtk+ 3.0 -->
+  <requires lib="gtk+" version="3.0"/>
   <object class="GtkAdjustment" id="adjustment1">
     <property name="upper">10000</property>
     <property name="step_increment">1</property>
@@ -64,10 +65,10 @@
       <object class="GtkLabel" id="ethernet_port_label">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="xalign">0</property>
         <property name="label" translatable="yes">_Port:</property>
         <property name="use_underline">True</property>
         <property name="mnemonic_widget">ethernet_port</property>
+        <property name="xalign">0</property>
       </object>
       <packing>
         <property name="x_options">GTK_FILL</property>
@@ -96,10 +97,10 @@
       <object class="GtkLabel" id="ethernet_speed_label">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="xalign">0</property>
         <property name="label" translatable="yes">_Speed:</property>
         <property name="use_underline">True</property>
         <property name="mnemonic_widget">ethernet_speed</property>
+        <property name="xalign">0</property>
       </object>
       <packing>
         <property name="top_attach">1</property>
@@ -135,6 +136,7 @@
         <property name="can_focus">True</property>
         <property name="receives_default">False</property>
         <property name="use_underline">True</property>
+        <property name="xalign">0.5</property>
         <property name="draw_indicator">True</property>
       </object>
       <packing>
@@ -152,6 +154,7 @@
         <property name="can_focus">True</property>
         <property name="receives_default">False</property>
         <property name="use_underline">True</property>
+        <property name="xalign">0.5</property>
         <property name="draw_indicator">True</property>
       </object>
       <packing>
@@ -166,9 +169,9 @@
       <object class="GtkLabel" id="ethernet_device_label">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="xalign">0</property>
         <property name="label" translatable="yes">_Device:</property>
         <property name="use_underline">True</property>
+        <property name="xalign">0</property>
       </object>
       <packing>
         <property name="top_attach">4</property>
@@ -197,10 +200,10 @@
       <object class="GtkLabel" id="label27">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="xalign">0</property>
         <property name="label" translatable="yes">C_loned MAC address:</property>
         <property name="use_underline">True</property>
         <property name="mnemonic_widget">ethernet_cloned_mac</property>
+        <property name="xalign">0</property>
       </object>
       <packing>
         <property name="top_attach">5</property>
@@ -227,10 +230,10 @@
       <object class="GtkLabel" id="label28">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="xalign">0</property>
         <property name="label" translatable="yes">_MTU:</property>
         <property name="use_underline">True</property>
         <property name="mnemonic_widget">ethernet_mtu</property>
+        <property name="xalign">0</property>
       </object>
       <packing>
         <property name="top_attach">6</property>
@@ -290,7 +293,7 @@
         <property name="top_attach">7</property>
         <property name="bottom_attach">8</property>
         <property name="x_options">GTK_FILL</property>
-        <property name="y_options"></property>
+        <property name="y_options"/>
       </packing>
     </child>
     <child>
@@ -434,10 +437,10 @@
       <object class="GtkLabel" id="label31">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="xalign">0</property>
         <property name="label" translatable="yes">_Wake on LAN password:</property>
         <property name="use_underline">True</property>
         <property name="mnemonic_widget">ethernet_wol_passwd</property>
+        <property name="xalign">0</property>
       </object>
       <packing>
         <property name="top_attach">8</property>

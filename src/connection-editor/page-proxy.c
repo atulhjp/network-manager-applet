@@ -33,12 +33,8 @@ G_DEFINE_TYPE (CEPageProxy, ce_page_proxy, CE_TYPE_PAGE)
 
 typedef struct {
 	NMSettingProxy *setting;
-	char *connection_id;
-	GType connection_type;
 
 	GtkComboBox *method;
-	GtkListStore *method_store;
-	int method_idx;
 
 	/* HTTP Proxy */
 	GtkWidget *http_proxy_label;
@@ -62,6 +58,10 @@ typedef struct {
 	GtkSpinButton *socks_port;
 	GtkCheckButton *socks_version_5;
 
+	/* PAC Script */
+	GtkWidget *pac_script_label;
+	GtkFileChooser *pac_script;
+
 	/* NO PROXY FOR */
 	GtkWidget *no_proxy_for_label;
 	GtkEntry *no_proxy_for;
@@ -69,21 +69,6 @@ typedef struct {
 	/* PAC URL */
 	GtkWidget *pac_url_label;
 	GtkEntry *pac_url;
-
-	/* PAC Script */
-	GtkWidget *pac_script_label;
-	GtkEntry *pac_script;
-
-	GtkWindowGroup *window_group;
-	gboolean window_added;
-
-	/* Cached tree view entry for editing-canceled */
-	/* Used also for saving old value when switching between cells via mouse
-	 * clicks - GTK3 produces neither editing-canceled nor editing-done for
-	 * that :( */
-	char *last_edited; /* cell text */
-	char *last_path;   /* row in treeview */
-	int last_column;   /* column in treeview */
 } CEPageProxyPrivate;
 
 #define PROXY_METHOD_NONE    0
@@ -118,14 +103,14 @@ proxy_private_init (CEPageProxy *self)
 	priv->socks_port = GTK_SPIN_BUTTON (gtk_builder_get_object (builder, "proxy_socks_port_spin"));
 	priv->socks_version_5 = GTK_CHECK_BUTTON (gtk_builder_get_object (builder, "proxy_socks_version_checkbutton"));
 
+	priv->pac_script_label = GTK_WIDGET (gtk_builder_get_object (builder, "proxy_pac_script_label"));
+	priv->pac_script = GTK_FILE_CHOOSER (gtk_builder_get_object (builder, "proxy_pac_script_button"));
+
 	priv->no_proxy_for_label = GTK_WIDGET (gtk_builder_get_object (builder, "proxy_no_proxy_for_label"));
 	priv->no_proxy_for = GTK_ENTRY (gtk_builder_get_object (builder, "proxy_no_proxy_for_entry"));
 
 	priv->pac_url_label = GTK_WIDGET (gtk_builder_get_object (builder, "proxy_pac_url_label"));
 	priv->pac_url = GTK_ENTRY (gtk_builder_get_object (builder, "proxy_pac_url_entry"));
-
-	priv->pac_script_label = GTK_WIDGET (gtk_builder_get_object (builder, "proxy_pac_script_label"));
-	priv->pac_script = GTK_ENTRY (gtk_builder_get_object (builder, "proxy_pac_script_entry"));
 }
 
 static void
@@ -138,56 +123,56 @@ method_changed (GtkComboBox *combo, gpointer user_data)
 	method = gtk_combo_box_get_active (combo);
 
 	if (method == PROXY_METHOD_AUTO || method == PROXY_METHOD_NONE) {
-		gtk_widget_hide (GTK_WIDGET (priv->http_proxy_label));
-		gtk_widget_hide (GTK_WIDGET (priv->http_proxy));
-		gtk_widget_hide (GTK_WIDGET (priv->http_port));
-		gtk_widget_hide (GTK_WIDGET (priv->http_default));
-		gtk_widget_hide (GTK_WIDGET (priv->ssl_proxy_label));
-		gtk_widget_hide (GTK_WIDGET (priv->ssl_proxy));
-		gtk_widget_hide (GTK_WIDGET (priv->ssl_port));
-		gtk_widget_hide (GTK_WIDGET (priv->ftp_proxy_label));
-		gtk_widget_hide (GTK_WIDGET (priv->ftp_proxy));
-		gtk_widget_hide (GTK_WIDGET (priv->ftp_port));
-		gtk_widget_hide (GTK_WIDGET (priv->socks_proxy_label));
-		gtk_widget_hide (GTK_WIDGET (priv->socks_proxy));
-		gtk_widget_hide (GTK_WIDGET (priv->socks_port));
-		gtk_widget_hide (GTK_WIDGET (priv->socks_version_5));
-		gtk_widget_show (GTK_WIDGET (priv->no_proxy_for_label));
-		gtk_widget_show (GTK_WIDGET (priv->no_proxy_for));
-		gtk_widget_show (GTK_WIDGET (priv->pac_url_label));
-		gtk_widget_show (GTK_WIDGET (priv->pac_url));
-		gtk_widget_show (GTK_WIDGET (priv->pac_script_label));
-		gtk_widget_show (GTK_WIDGET (priv->pac_script));
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->http_proxy_label), FALSE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->http_proxy), FALSE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->http_port), FALSE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->http_default), FALSE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->ssl_proxy_label), FALSE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->ssl_proxy), FALSE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->ssl_port), FALSE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->ftp_proxy_label), FALSE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->ftp_proxy), FALSE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->ftp_port), FALSE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->socks_proxy_label), FALSE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->socks_proxy), FALSE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->socks_port), FALSE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->socks_version_5), FALSE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->pac_script_label), FALSE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->pac_script), FALSE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->no_proxy_for_label), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->no_proxy_for), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->pac_url_label), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->pac_url), TRUE);
 
 		if (method == PROXY_METHOD_NONE) {
-			gtk_widget_hide (GTK_WIDGET (priv->no_proxy_for_label));
-			gtk_widget_hide (GTK_WIDGET (priv->no_proxy_for));
-			gtk_widget_hide (GTK_WIDGET (priv->pac_url_label));
-			gtk_widget_hide (GTK_WIDGET (priv->pac_url));
-			gtk_widget_hide (GTK_WIDGET (priv->pac_script_label));
-			gtk_widget_hide (GTK_WIDGET (priv->pac_script));
+			gtk_widget_set_sensitive (GTK_WIDGET (priv->pac_script_label), FALSE);
+			gtk_widget_set_sensitive (GTK_WIDGET (priv->pac_script), FALSE);
+			gtk_widget_set_sensitive (GTK_WIDGET (priv->no_proxy_for_label), FALSE);
+			gtk_widget_set_sensitive (GTK_WIDGET (priv->no_proxy_for), FALSE);
+			gtk_widget_set_sensitive (GTK_WIDGET (priv->pac_url_label), FALSE);
+			gtk_widget_set_sensitive (GTK_WIDGET (priv->pac_url), FALSE);
 		}
 	} else {
-		gtk_widget_show (GTK_WIDGET (priv->http_proxy_label));
-		gtk_widget_show (GTK_WIDGET (priv->http_proxy));
-		gtk_widget_show (GTK_WIDGET (priv->http_port));
-		gtk_widget_show (GTK_WIDGET (priv->http_default));
-		gtk_widget_show (GTK_WIDGET (priv->ssl_proxy_label));
-		gtk_widget_show (GTK_WIDGET (priv->ssl_proxy));
-		gtk_widget_show (GTK_WIDGET (priv->ssl_port));
-		gtk_widget_show (GTK_WIDGET (priv->ftp_proxy_label));
-		gtk_widget_show (GTK_WIDGET (priv->ftp_proxy));
-		gtk_widget_show (GTK_WIDGET (priv->ftp_port));
-		gtk_widget_show (GTK_WIDGET (priv->socks_proxy_label));
-		gtk_widget_show (GTK_WIDGET (priv->socks_proxy));
-		gtk_widget_show (GTK_WIDGET (priv->socks_port));
-		gtk_widget_show (GTK_WIDGET (priv->socks_version_5));
-		gtk_widget_show (GTK_WIDGET (priv->no_proxy_for_label));
-		gtk_widget_show (GTK_WIDGET (priv->no_proxy_for));
-		gtk_widget_hide (GTK_WIDGET (priv->pac_url_label));
-		gtk_widget_hide (GTK_WIDGET (priv->pac_url));
-		gtk_widget_hide (GTK_WIDGET (priv->pac_script_label));
-		gtk_widget_hide (GTK_WIDGET (priv->pac_script));
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->http_proxy_label), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->http_proxy), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->http_port), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->http_default), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->ssl_proxy_label), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->ssl_proxy), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->ssl_port), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->ftp_proxy_label), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->ftp_proxy), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->ftp_port), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->socks_proxy_label), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->socks_proxy), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->socks_port), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->socks_version_5), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->pac_script_label), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->pac_script), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->no_proxy_for_label), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->no_proxy_for), TRUE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->pac_url_label), FALSE);
+		gtk_widget_set_sensitive (GTK_WIDGET (priv->pac_url), FALSE);
 	}
 }
 
@@ -197,59 +182,73 @@ populate_ui (CEPageProxy *self)
 	CEPageProxyPrivate *priv = CE_PAGE_PROXY_GET_PRIVATE (self);
 	NMSettingProxy *setting = priv->setting;
 	NMSettingProxyMethod s_method;
-	int method = PROXY_METHOD_AUTO;
 	GString *string = NULL;
-	char **excludes;
+	char **excludes = NULL;
 
 	/* Method */
 	s_method = nm_setting_proxy_get_method (setting);
-	if (s_method == NM_SETTING_PROXY_METHOD_NONE)
-		method = PROXY_METHOD_NONE;
-	else if (s_method == NM_SETTING_PROXY_METHOD_AUTO)
-		method = PROXY_METHOD_AUTO;
-	else if (s_method == NM_SETTING_PROXY_METHOD_MANUAL)
-		method = PROXY_METHOD_MANUAL;
-	gtk_combo_box_set_active (priv->method, method);
+	switch (s_method) {
+	case NM_SETTING_PROXY_METHOD_NONE:
+		gtk_combo_box_set_active (priv->method, PROXY_METHOD_NONE);
+		/* Nothing to Show */
+		break;
+	case NM_SETTING_PROXY_METHOD_AUTO:
+		gtk_combo_box_set_active (priv->method, PROXY_METHOD_AUTO);
 
-	/* HTTP Proxy */
-	gtk_entry_set_text (priv->http_proxy, nm_setting_proxy_get_http_proxy (setting));
-	gtk_spin_button_set_value (priv->http_port,
-	                          (gdouble) nm_setting_proxy_get_http_port (setting));
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->http_default),
-	                              nm_setting_proxy_get_http_default (setting));
+		/* No Proxy For */
+		string = g_string_new ("");
+		for (excludes = nm_setting_proxy_get_no_proxy_for (setting); *excludes; excludes++) {
+			if (string->len)
+				g_string_append (string, ", ");
+			g_string_append (string, *excludes);
+		}
+		gtk_entry_set_text (priv->no_proxy_for, string->str);
+		g_string_free (string, TRUE);
 
-	/* SSL Proxy */
-	gtk_entry_set_text (priv->ssl_proxy, nm_setting_proxy_get_ssl_proxy (setting));
-	gtk_spin_button_set_value (priv->ssl_port,
-	                          (gdouble) nm_setting_proxy_get_ssl_port (setting));
+		/* Pac Url */
+		gtk_entry_set_text (priv->pac_url, nm_setting_proxy_get_pac_url (setting));
 
-	/* FTP Proxy */
-	gtk_entry_set_text (priv->ftp_proxy, nm_setting_proxy_get_ftp_proxy (setting));
-	gtk_spin_button_set_value (priv->ftp_port,
-	                          (gdouble) nm_setting_proxy_get_ftp_port (setting));
+		break;
+	case NM_SETTING_PROXY_METHOD_MANUAL:
+		gtk_combo_box_set_active (priv->method, PROXY_METHOD_MANUAL);
 
-	/* SOCKS Proxy */
-	gtk_entry_set_text (priv->socks_proxy, nm_setting_proxy_get_socks_proxy (setting));
-	gtk_spin_button_set_value (priv->socks_port,
-	                          (gdouble) nm_setting_proxy_get_socks_port (setting));
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->socks_version_5),
-	                              nm_setting_proxy_get_socks_version_5 (setting));
+		/* HTTP Proxy */
+		gtk_entry_set_text (priv->http_proxy, nm_setting_proxy_get_http_proxy (setting));
+		gtk_spin_button_set_value (priv->http_port,
+		                          (gdouble) nm_setting_proxy_get_http_port (setting));
+		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->http_default),
+		                              nm_setting_proxy_get_http_default (setting));
 
-	/* No Proxy For */
-	string = g_string_new ("");
-	for (excludes = (char **) nm_setting_proxy_get_no_proxy_for (setting); *excludes; excludes++) {
-		if (string->len)
-			g_string_append (string, ", ");
-		g_string_append (string, *excludes);
+		/* SSL Proxy */
+		gtk_entry_set_text (priv->ssl_proxy, nm_setting_proxy_get_ssl_proxy (setting));
+		gtk_spin_button_set_value (priv->ssl_port,
+		                          (gdouble) nm_setting_proxy_get_ssl_port (setting));
+
+		/* FTP Proxy */
+		gtk_entry_set_text (priv->ftp_proxy, nm_setting_proxy_get_ftp_proxy (setting));
+		gtk_spin_button_set_value (priv->ftp_port,
+		                          (gdouble) nm_setting_proxy_get_ftp_port (setting));
+
+		/* SOCKS Proxy */
+		gtk_entry_set_text (priv->socks_proxy, nm_setting_proxy_get_socks_proxy (setting));
+		gtk_spin_button_set_value (priv->socks_port,
+		                          (gdouble) nm_setting_proxy_get_socks_port (setting));
+		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->socks_version_5),
+		                              nm_setting_proxy_get_socks_version_5 (setting));
+
+		/* Pac Script */
+		gtk_file_chooser_set_uri (priv->pac_script, nm_setting_proxy_get_pac_script (setting));
+
+		/* No Proxy For */
+		string = g_string_new ("");
+		for (excludes = (char **) nm_setting_proxy_get_no_proxy_for (setting); *excludes; excludes++) {
+			if (string->len)
+				g_string_append (string, ", ");
+			g_string_append (string, *excludes);
+		}
+		gtk_entry_set_text (priv->no_proxy_for, string->str);
+		g_string_free (string, TRUE);
 	}
-	gtk_entry_set_text (priv->no_proxy_for, string->str);
-	g_string_free (string, TRUE);
-
-	/* Pac Url */
-	gtk_entry_set_text (priv->pac_url, nm_setting_proxy_get_pac_url (setting));
-
-	/* Pac Script */
-	gtk_entry_set_text (priv->pac_script, nm_setting_proxy_get_pac_script (setting));
 }
 
 static void
@@ -293,11 +292,8 @@ ce_page_proxy_new (NMConnectionEditor *editor,
 	proxy_private_init (self);
 	priv = CE_PAGE_PROXY_GET_PRIVATE (self);
 
-	priv->window_group = gtk_window_group_new ();
-
 	s_con = nm_connection_get_setting_connection (connection);
 	g_assert (s_con);
-	priv->connection_id = g_strdup (nm_setting_connection_get_id (s_con));
 
 	priv->setting = nm_connection_get_setting_proxy (connection);
 	g_assert (priv->setting);
@@ -311,8 +307,8 @@ static void
 ui_to_setting (CEPageProxy *self)
 {
 	CEPageProxyPrivate *priv = CE_PAGE_PROXY_GET_PRIVATE (self);
+	NMSettingConnection *s_con;
 	int method;
-	NMSettingProxyMethod s_method;
 	const char *http_proxy = NULL;
 	guint32 http_port;
 	gboolean http_default = FALSE;
@@ -323,79 +319,107 @@ ui_to_setting (CEPageProxy *self)
 	const char *socks_proxy = NULL;
 	guint32 socks_port;
 	gboolean socks_version_5 = FALSE;
+	const char *pac_script = NULL;
 	const char *text;
 	GPtrArray *tmp_array = NULL;
 	char **no_proxy_for = NULL;
 	char **items = NULL, **iter;
 	const char *pac_url = NULL;
-	const char *pac_script = NULL;
+
+	s_con = nm_connection_get_setting_connection (CE_PAGE (self)->connection);
+	g_return_if_fail (s_con != NULL);
 
 	/* Method */
-	s_method = nm_setting_proxy_get_method (priv->setting);
 	method = gtk_combo_box_get_active (priv->method);
-	if (method == PROXY_METHOD_NONE)
-		s_method = NM_SETTING_PROXY_METHOD_NONE;
-	else if (method == PROXY_METHOD_AUTO)
-		s_method = NM_SETTING_PROXY_METHOD_AUTO;
-	else if (method == PROXY_METHOD_MANUAL)
-		s_method = NM_SETTING_PROXY_METHOD_MANUAL;
+	switch (method) {
+	case PROXY_METHOD_NONE:
+		/* Update NMSetting */
+		g_object_set (priv->setting,
+		              NM_SETTING_PROXY_METHOD, NM_SETTING_PROXY_METHOD_NONE,
+		              NULL);
+		break;
+	case PROXY_METHOD_AUTO:
+		/* No Proxy For */
+		tmp_array = g_ptr_array_new ();
+		text = gtk_entry_get_text (GTK_ENTRY (priv->no_proxy_for));
+		if (text && strlen (text)) {
+			items = g_strsplit_set (text, ", ;:", 0);
+			for (iter = items; *iter; iter++) {
+				char *stripped = g_strstrip (*iter);
 
-	http_proxy = gtk_entry_get_text (priv->http_proxy);
-	http_port = gtk_spin_button_get_value_as_int (priv->http_port);
-
-	/* HTTP Default */
-	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->http_default)))
-		http_default = TRUE;
-
-	ssl_proxy = gtk_entry_get_text (priv->ssl_proxy);
-	ssl_port = gtk_spin_button_get_value_as_int (priv->ssl_port);
-
-	ftp_proxy = gtk_entry_get_text (priv->ftp_proxy);
-	ftp_port = gtk_spin_button_get_value_as_int (priv->ftp_port);
-
-	socks_proxy = gtk_entry_get_text (priv->socks_proxy);
-	socks_port = gtk_spin_button_get_value_as_int (priv->socks_port);
-
-	/* SOCKS Version */
-	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->socks_version_5)))
-		socks_version_5 = TRUE;
-
-	/* No Proxy For */
-	tmp_array = g_ptr_array_new ();
-	text = gtk_entry_get_text (GTK_ENTRY (priv->no_proxy_for));
-	if (text && strlen (text)) {
-		items = g_strsplit_set (text, ", ;:", 0);
-		for (iter = items; *iter; iter++) {
-			char *stripped = g_strstrip (*iter);
-
-			if (strlen (stripped))
-				g_ptr_array_add (tmp_array, g_strdup (stripped));
+				if (strlen (stripped))
+					g_ptr_array_add (tmp_array, g_strdup (stripped));
+			}
+			g_strfreev (items);
 		}
-		g_strfreev (items);
+		g_ptr_array_add (tmp_array, NULL);
+		no_proxy_for = (char **) g_ptr_array_free (tmp_array, FALSE);
+
+		pac_url = gtk_entry_get_text (priv->pac_url);
+
+		/* Update NMSetting */
+		g_object_set (priv->setting,
+		              NM_SETTING_PROXY_METHOD, NM_SETTING_PROXY_METHOD_AUTO,
+		              NM_SETTING_PROXY_NO_PROXY_FOR, no_proxy_for,
+		              NM_SETTING_PROXY_PAC_URL, pac_url,
+		              NULL);
+		break;
+	case PROXY_METHOD_MANUAL:
+		http_proxy = gtk_entry_get_text (priv->http_proxy);
+		http_port = gtk_spin_button_get_value_as_int (priv->http_port);
+
+		/* HTTP Default */
+		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->http_default)))
+			http_default = TRUE;
+
+		ssl_proxy = gtk_entry_get_text (priv->ssl_proxy);
+		ssl_port = gtk_spin_button_get_value_as_int (priv->ssl_port);
+
+		ftp_proxy = gtk_entry_get_text (priv->ftp_proxy);
+		ftp_port = gtk_spin_button_get_value_as_int (priv->ftp_port);
+
+		socks_proxy = gtk_entry_get_text (priv->socks_proxy);
+		socks_port = gtk_spin_button_get_value_as_int (priv->socks_port);
+
+		/* SOCKS Version */
+		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->socks_version_5)))
+			socks_version_5 = TRUE;
+
+		/* No Proxy For */
+		tmp_array = g_ptr_array_new ();
+		text = gtk_entry_get_text (GTK_ENTRY (priv->no_proxy_for));
+		if (text && strlen (text)) {
+			items = g_strsplit_set (text, ", ;:", 0);
+			for (iter = items; *iter; iter++) {
+				char *stripped = g_strstrip (*iter);
+
+				if (strlen (stripped))
+					g_ptr_array_add (tmp_array, g_strdup (stripped));
+			}
+			g_strfreev (items);
+		}
+		g_ptr_array_add (tmp_array, NULL);
+		no_proxy_for = (char **) g_ptr_array_free (tmp_array, FALSE);
+
+		pac_script = gtk_file_chooser_get_uri (priv->pac_script);
+
+		/* Update NMSetting */
+		g_object_set (priv->setting,
+		              NM_SETTING_PROXY_METHOD, NM_SETTING_PROXY_METHOD_MANUAL,
+		              NM_SETTING_PROXY_HTTP_PROXY, http_proxy,
+		              NM_SETTING_PROXY_HTTP_PORT, http_port,
+		              NM_SETTING_PROXY_HTTP_DEFAULT, http_default,
+		              NM_SETTING_PROXY_SSL_PROXY, ssl_proxy,
+		              NM_SETTING_PROXY_SSL_PORT, ssl_port,
+		              NM_SETTING_PROXY_FTP_PROXY, ftp_proxy,
+		              NM_SETTING_PROXY_FTP_PORT, ftp_port,
+		              NM_SETTING_PROXY_SOCKS_PROXY, socks_proxy,
+		              NM_SETTING_PROXY_SOCKS_PORT, socks_port,
+		              NM_SETTING_PROXY_SOCKS_VERSION_5, socks_version_5,
+		              NM_SETTING_PROXY_NO_PROXY_FOR, no_proxy_for,
+		              NM_SETTING_PROXY_PAC_SCRIPT, pac_script,
+		              NULL);
 	}
-	g_ptr_array_add (tmp_array, NULL);
-	no_proxy_for = (char **) g_ptr_array_free (tmp_array, FALSE);
-
-	pac_url = gtk_entry_get_text (priv->pac_url);
-	pac_script = gtk_entry_get_text (priv->pac_script);
-
-	/* Update setting */
-	g_object_set (priv->setting,
-	              NM_SETTING_PROXY_METHOD, s_method,
-	              NM_SETTING_PROXY_HTTP_PROXY, http_proxy,
-	              NM_SETTING_PROXY_HTTP_PORT, http_port,
-	              NM_SETTING_PROXY_HTTP_DEFAULT, http_default,
-	              NM_SETTING_PROXY_SSL_PROXY, ssl_proxy,
-	              NM_SETTING_PROXY_SSL_PORT, ssl_port,
-	              NM_SETTING_PROXY_FTP_PROXY, ftp_proxy,
-	              NM_SETTING_PROXY_FTP_PORT, ftp_port,
-	              NM_SETTING_PROXY_SOCKS_PROXY, socks_proxy,
-	              NM_SETTING_PROXY_SOCKS_PORT, socks_port,
-	              NM_SETTING_PROXY_SOCKS_VERSION_5, socks_version_5,
-	              NM_SETTING_PROXY_NO_PROXY_FOR, no_proxy_for,
-	              NM_SETTING_PROXY_PAC_URL, pac_url,
-	              NM_SETTING_PROXY_PAC_SCRIPT, pac_script,
-	              NULL);
 }
 
 static gboolean
@@ -411,23 +435,6 @@ ce_page_validate_v (CEPage *page, NMConnection *connection, GError **error)
 static void
 ce_page_proxy_init (CEPageProxy *self)
 {
-	CEPageProxyPrivate *priv = CE_PAGE_PROXY_GET_PRIVATE (self);
-
-	priv->last_column = -1;
-	priv->method_idx = -1;
-}
-
-static void
-dispose (GObject *object)
-{
-	CEPageProxy *self = CE_PAGE_PROXY (object);
-	CEPageProxyPrivate *priv = CE_PAGE_PROXY_GET_PRIVATE (self);
-
-	g_clear_object (&priv->window_group);
-
-	g_clear_pointer (&priv->connection_id, g_free);
-
-	G_OBJECT_CLASS (ce_page_proxy_parent_class)->dispose (object);
 }
 
 static void
@@ -440,5 +447,4 @@ ce_page_proxy_class_init (CEPageProxyClass *proxy_class)
 
 	/* virtual methods */
 	parent_class->ce_page_validate_v = ce_page_validate_v;
-	object_class->dispose = dispose;
 }

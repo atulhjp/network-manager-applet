@@ -627,6 +627,18 @@ delete_connection (GtkWindow *parent_window,
 }
 
 gboolean
+connection_supports_proxy (NMConnection *connection)
+{
+	NMSettingConnection *s_con;
+
+	g_return_val_if_fail (NM_IS_CONNECTION (connection), FALSE);
+
+	/* Same as IP4 stuff */
+	s_con = nm_connection_get_setting_connection (connection);
+	return (nm_setting_connection_get_slave_type (s_con) == NULL);
+}
+
+gboolean
 connection_supports_ip4 (NMConnection *connection)
 {
 	NMSettingConnection *s_con;

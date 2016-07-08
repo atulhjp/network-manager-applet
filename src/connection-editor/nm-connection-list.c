@@ -277,6 +277,8 @@ really_add_connection (NMConnection *connection,
 		return;
 	}
 
+	if (connection_supports_proxy (connection) && !nm_connection_get_setting_proxy (connection))
+		nm_connection_add_setting (connection, nm_setting_proxy_new ());
 	if (connection_supports_ip4 (connection) && !nm_connection_get_setting_ip4_config (connection))
 		nm_connection_add_setting (connection, nm_setting_ip4_config_new ());
 	if (connection_supports_ip6 (connection) && !nm_connection_get_setting_ip6_config (connection))

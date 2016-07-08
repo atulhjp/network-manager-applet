@@ -22,6 +22,7 @@
   <object class="GtkBox" id="ProxyPage">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <property name="border_width">12</property>
     <property name="orientation">vertical</property>
     <property name="spacing">18</property>
     <child>
@@ -320,13 +321,50 @@
         <property name="receives_default">False</property>
         <property name="tooltip_text" translatable="yes">Default is SOCKS v4.</property>
         <property name="margin_left">100</property>
-        <property name="xalign">0</property>
+        <property name="xalign">2.2351741291171123e-10</property>
         <property name="draw_indicator">True</property>
       </object>
       <packing>
         <property name="expand">False</property>
         <property name="fill">False</property>
         <property name="position">6</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkBox" id="box3">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="spacing">4</property>
+        <child>
+          <object class="GtkLabel" id="proxy_pac_script_label">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">PAC Script:       </property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkFileChooserButton" id="proxy_pac_script_button">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="tooltip_text" translatable="yes">Manual Configuration fallbacks to PAC Script if proxy servers are not specified</property>
+            <property name="title" translatable="yes">Select a PAC File</property>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">7</property>
       </packing>
     </child>
     <child>
@@ -362,7 +400,7 @@
       <packing>
         <property name="expand">False</property>
         <property name="fill">True</property>
-        <property name="position">7</property>
+        <property name="position">8</property>
       </packing>
     </child>
     <child>
@@ -387,41 +425,6 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="tooltip_text" translatable="yes">URL from where PAC Script is to be obtained.</property>
-          </object>
-          <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-      </object>
-      <packing>
-        <property name="expand">False</property>
-        <property name="fill">True</property>
-        <property name="position">8</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkBox" id="box3">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <child>
-          <object class="GtkLabel" id="proxy_pac_script_label">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="label" translatable="yes">PAC Script:       </property>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkEntry" id="proxy_pac_script_entry">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="tooltip_text" translatable="yes">Paste Your PAC Script here.</property>
           </object>
           <packing>
             <property name="expand">True</property>
