@@ -368,20 +368,20 @@ ui_to_setting (CEPageProxy *self)
 		break;
 	case PROXY_METHOD_MANUAL:
 		http_proxy = gtk_entry_get_text (priv->http_proxy);
-		http_port = gtk_spin_button_get_value_as_int (priv->http_port);
+		http_port = (guint32) gtk_spin_button_get_value_as_int (priv->http_port);
 
 		/* HTTP Default */
 		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->http_default)))
 			http_default = TRUE;
 
 		ssl_proxy = gtk_entry_get_text (priv->ssl_proxy);
-		ssl_port = gtk_spin_button_get_value_as_int (priv->ssl_port);
+		ssl_port = (guint32) gtk_spin_button_get_value_as_int (priv->ssl_port);
 
 		ftp_proxy = gtk_entry_get_text (priv->ftp_proxy);
-		ftp_port = gtk_spin_button_get_value_as_int (priv->ftp_port);
+		ftp_port = (guint32) gtk_spin_button_get_value_as_int (priv->ftp_port);
 
 		socks_proxy = gtk_entry_get_text (priv->socks_proxy);
-		socks_port = gtk_spin_button_get_value_as_int (priv->socks_port);
+		socks_port = (guint32) gtk_spin_button_get_value_as_int (priv->socks_port);
 
 		/* SOCKS Version */
 		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->socks_version_5)))
