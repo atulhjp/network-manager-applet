@@ -184,7 +184,7 @@ populate_ui (CEPageProxy *self)
 	NMSettingProxy *setting = priv->setting;
 	NMSettingProxyMethod s_method;
 	GString *string = NULL;
-	char **excludes = NULL;
+	char **iter, **excludes = NULL;
 	const char *uri = NULL;
 
 	/* Method */
@@ -198,14 +198,17 @@ populate_ui (CEPageProxy *self)
 		gtk_combo_box_set_active (priv->method, PROXY_METHOD_AUTO);
 
 		/* No Proxy For */
-		string = g_string_new ("");
-		for (excludes = nm_setting_proxy_get_no_proxy_for (setting); *excludes; excludes++) {
-			if (string->len)
-				g_string_append (string, ", ");
-			g_string_append (string, *excludes);
+		excludes = nm_setting_proxy_get_no_proxy_for (setting);
+		if (excludes) {
+			string = g_string_new ("");
+			for (iter = excludes; *iter; iter++) {
+				if (string->len)
+					g_string_append (string, ", ");
+				g_string_append (string, *iter);
+			}
+			gtk_entry_set_text (priv->no_proxy_for, string->str);
+			g_string_free (string, TRUE);
 		}
-		gtk_entry_set_text (priv->no_proxy_for, string->str);
-		g_string_free (string, TRUE);
 
 		/* Pac Url */
 		gtk_entry_set_text (priv->pac_url, nm_setting_proxy_get_pac_url (setting));
@@ -244,14 +247,17 @@ populate_ui (CEPageProxy *self)
 			gtk_file_chooser_set_uri (priv->pac_script, uri);
 
 		/* No Proxy For */
-		string = g_string_new ("");
-		for (excludes = (char **) nm_setting_proxy_get_no_proxy_for (setting); *excludes; excludes++) {
-			if (string->len)
-				g_string_append (string, ", ");
-			g_string_append (string, *excludes);
+		excludes = nm_setting_proxy_get_no_proxy_for (setting);
+		if (excludes) {
+			string = g_string_new ("");
+			for (iter = excludes; *iter; iter++) {
+				if (string->len)
+					g_string_append (string, ", ");
+				g_string_append (string, *iter);
+			}
+			gtk_entry_set_text (priv->no_proxy_for, string->str);
+			g_string_free (string, TRUE);
 		}
-		gtk_entry_set_text (priv->no_proxy_for, string->str);
-		g_string_free (string, TRUE);
 	}
 }
 
@@ -366,7 +372,7 @@ ui_to_setting (CEPageProxy *self)
 			g_strfreev (items);
 		}
 		g_ptr_array_add (tmp_array, NULL);
-		no_proxy_for = (char **) g_ptr_array_free (tmp_array, FALSE);
+		no_proxy_for = (char **) g_ptr_array_free (tmp_array, (tmp_array->len == 1));
 
 		pac_url = gtk_entry_get_text (priv->pac_url);
 
@@ -416,7 +422,7 @@ ui_to_setting (CEPageProxy *self)
 			g_strfreev (items);
 		}
 		g_ptr_array_add (tmp_array, NULL);
-		no_proxy_for = (char **) g_ptr_array_free (tmp_array, FALSE);
+		no_proxy_for = (char **) g_ptr_array_free (tmp_array, (tmp_array->len == 1));
 
 		pac_script = gtk_file_chooser_get_uri (priv->pac_script);
 
