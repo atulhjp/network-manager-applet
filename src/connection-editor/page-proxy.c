@@ -185,6 +185,7 @@ populate_ui (CEPageProxy *self)
 	NMSettingProxyMethod s_method;
 	GString *string = NULL;
 	char **excludes = NULL;
+	const char *uri = NULL;
 
 	/* Method */
 	s_method = nm_setting_proxy_get_method (setting);
@@ -238,7 +239,9 @@ populate_ui (CEPageProxy *self)
 		                              nm_setting_proxy_get_socks_version_5 (setting));
 
 		/* Pac Script */
-		gtk_file_chooser_set_uri (priv->pac_script, nm_setting_proxy_get_pac_script (setting));
+		uri = nm_setting_proxy_get_pac_script (setting);
+		if (uri)
+			gtk_file_chooser_set_uri (priv->pac_script, uri);
 
 		/* No Proxy For */
 		string = g_string_new ("");
@@ -335,12 +338,20 @@ ui_to_setting (CEPageProxy *self)
 	method = gtk_combo_box_get_active (priv->method);
 	switch (method) {
 	case PROXY_METHOD_NONE:
+		nm_connection_remove_setting (CE_PAGE (self)->connection, NM_TYPE_SETTING_PROXY);
+		priv->setting = (NMSettingProxy *) nm_setting_proxy_new ();
+		nm_connection_add_setting (CE_PAGE (self)->connection, NM_SETTING (priv->setting));
+
 		/* Update NMSetting */
 		g_object_set (priv->setting,
 		              NM_SETTING_PROXY_METHOD, NM_SETTING_PROXY_METHOD_NONE,
 		              NULL);
 		break;
 	case PROXY_METHOD_AUTO:
+		nm_connection_remove_setting (CE_PAGE (self)->connection, NM_TYPE_SETTING_PROXY);
+		priv->setting = (NMSettingProxy *) nm_setting_proxy_new ();
+		nm_connection_add_setting (CE_PAGE (self)->connection, NM_SETTING (priv->setting));
+
 		/* No Proxy For */
 		tmp_array = g_ptr_array_new ();
 		text = gtk_entry_get_text (GTK_ENTRY (priv->no_proxy_for));
@@ -367,6 +378,10 @@ ui_to_setting (CEPageProxy *self)
 		              NULL);
 		break;
 	case PROXY_METHOD_MANUAL:
+		nm_connection_remove_setting (CE_PAGE (self)->connection, NM_TYPE_SETTING_PROXY);
+		priv->setting = (NMSettingProxy *) nm_setting_proxy_new ();
+		nm_connection_add_setting (CE_PAGE (self)->connection, NM_SETTING (priv->setting));
+
 		http_proxy = gtk_entry_get_text (priv->http_proxy);
 		http_port = (guint32) gtk_spin_button_get_value_as_int (priv->http_port);
 
