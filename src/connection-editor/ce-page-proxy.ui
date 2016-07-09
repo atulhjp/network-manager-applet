@@ -2,23 +2,6 @@
 <!-- Generated with glade 3.19.0 -->
 <interface>
   <requires lib="gtk+" version="3.16"/>
-  <object class="GtkListStore" id="proxy_mode_model">
-    <columns>
-      <!-- column-name gchararray -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0" translatable="yes">NONE</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">AUTOMATIC (WPAD)</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">MANUAL</col>
-      </row>
-    </data>
-  </object>
   <object class="GtkBox" id="ProxyPage">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -44,15 +27,19 @@
           </packing>
         </child>
         <child>
-          <object class="GtkComboBox" id="proxy_method">
+          <object class="GtkComboBoxText" id="proxy_method">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="model">proxy_mode_model</property>
+            <property name="active_id">0</property>
+            <items>
+              <item id="0" translatable="yes">NONE</item>
+              <item id="1" translatable="yes">AUTOMATIC</item>
+              <item id="2" translatable="yes">MANUAL</item>
+            </items>
           </object>
           <packing>
             <property name="expand">True</property>
             <property name="fill">True</property>
-            <property name="pack_type">end</property>
             <property name="position">1</property>
           </packing>
         </child>
@@ -439,5 +426,27 @@
         <property name="position">9</property>
       </packing>
     </child>
+  </object>
+  <object class="GtkListStore" id="proxy_method_liststore">
+    <columns>
+      <!-- column-name method -->
+      <column type="gchararray"/>
+      <!-- column-name Value -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">NONE</col>
+        <col id="1" translatable="yes">none</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">AUTOMATIC (WPAD)</col>
+        <col id="1" translatable="yes">auto</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">MANUAL</col>
+        <col id="1" translatable="yes">manual</col>
+      </row>
+    </data>
   </object>
 </interface>

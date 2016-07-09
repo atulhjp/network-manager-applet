@@ -34,7 +34,9 @@ G_DEFINE_TYPE (CEPageProxy, ce_page_proxy, CE_TYPE_PAGE)
 typedef struct {
 	NMSettingProxy *setting;
 
+	/* Method */
 	GtkComboBox *method;
+	GtkListStore *method_store;
 
 	/* HTTP Proxy */
 	GtkWidget *http_proxy_label;
@@ -428,7 +430,12 @@ ce_page_validate_v (CEPage *page, NMConnection *connection, GError **error)
 	CEPageProxy *self = CE_PAGE_PROXY (page);
 	CEPageProxyPrivate *priv = CE_PAGE_PROXY_GET_PRIVATE (self);
 
+	if (!priv->setting) {
+		priv->setting = (NMSettingProxy *) nm_setting_proxy_new ();
+		nm_connection_add_setting (connection, NM_SETTING (priv->setting));
+	}
 	ui_to_setting (self);
+
 	return nm_setting_verify (NM_SETTING (priv->setting), NULL, error);
 }
 

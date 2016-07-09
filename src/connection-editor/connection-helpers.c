@@ -633,7 +633,7 @@ connection_supports_proxy (NMConnection *connection)
 
 	g_return_val_if_fail (NM_IS_CONNECTION (connection), FALSE);
 
-	/* Same as IP4 stuff */
+	/* Same Stuff as IP4 */
 	s_con = nm_connection_get_setting_connection (connection);
 	return (nm_setting_connection_get_slave_type (s_con) == NULL);
 }
