@@ -36,7 +36,6 @@ typedef struct {
 
 	/* Method */
 	GtkComboBox *method;
-	GtkListStore *method_store;
 
 	/* HTTP Proxy */
 	GtkWidget *http_proxy_label;
@@ -263,6 +262,7 @@ finish_setup (CEPageProxy *self, gpointer unused, GError *error, gpointer user_d
 
 	populate_ui (self);
 
+	method_changed (priv->method, self);
 	g_signal_connect (priv->method, "changed", G_CALLBACK (method_changed), self);
 }
 
