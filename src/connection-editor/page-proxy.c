@@ -372,7 +372,7 @@ ui_to_setting (CEPageProxy *self)
 			g_strfreev (items);
 		}
 		g_ptr_array_add (tmp_array, NULL);
-		no_proxy_for = (char **) g_ptr_array_free (tmp_array, (tmp_array->len == 1));
+		no_proxy_for = (char **) g_ptr_array_free (tmp_array, FALSE);
 
 		pac_url = gtk_entry_get_text (priv->pac_url);
 
